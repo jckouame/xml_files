@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
+<filter version="0" id="chroot.jail.detecor.1.0">
+	<head>
+		<traceType id="org.eclipse.linuxtools.lttng2.kernel.tracetype" />
+		<label value="chroot.jail.detecor.1.0" />
+	</head>
+	
+	<definedField name="filename" id="filename"/>
+	<definedField name="fd" id="fd"/>
+	<definedField name="ret" id="ret"/>
+	<definedField name="flags" id="flags"/>
+	<definedField name="offset" id="offset"/>
+	<definedField name="fd_in" id="fd_in"/>
+	<definedField name="fd_out" id="fd_out"/>
+	<definedField name="uservaddr" id="uservaddr"/>
+	<definedField name="upeer_sockaddr" id="upeer_sockaddr"/>
+	<location id="CurrentThread">
+            <stateAttribute type="constant" value="Threads" />
+            <stateAttribute type="query">
+                <stateAttribute type="constant" value="CPUs" />
+                <stateAttribute type="eventField" value="cpu" />
+                <stateAttribute type="constant" value="Current_thread" />
+            </stateAttribute>
+        </location>
+        <location id="CurrentCPU">
+            <stateAttribute type="constant" value="CPUs" />
+            <stateAttribute type="eventField" value="cpu" />
+        </location>
+	<location id="CurrentScenario">
+            <stateAttribute type="constant" value="filter" />
+            <stateAttribute type="constant" value="#arg_0" />
+	    <stateAttribute type="constant" value="scenarios" />
+	    <stateAttribute type="constant" value="#arg_1" />
+        </location>
+	<filterHandler filterName="FSMs">
+		<initialFsm id="sched_switch|chroot"/>
+<!-- 		SYSCALL INPUTS -->
+		<transitionInput id="syscall_entry_chroot">
+			<event eventName="syscall_entry_chroot"/>
+		</transitionInput>
+		<transitionInput id="syscall_exit_chroot">
+			<event eventName="syscall_exit_chroot"/>
+		</transitionInput>
+		<transitionInput id="syscall_entry_chdir">
+			<event eventName="syscall_entry_chdirt"/>
+		</transitionInput>
+		<transitionInput id="syscall_exit_chdir">
+			<event eventName="syscall_exit_chir"/>
+		</transitionInput>
+		<transitionInput id="syscall_entry_opem">
+			<event eventName="syscall_entry_open"/>
+		</transitionInput>
+		<transitionInput id="syscall_exit_open">
+			<event eventName="syscall_exit_open"/>
+		</transitionInput>
+		<transitionInput id="syscall_entry_exit">
+			<event eventName="syscall_entry_exit"/>
+		</transitionInput>
+		<transitionInput id="syscall_exit_exit">
+			<event eventName="syscall_exit_exit"/>
+		</transitionInput>
+<!-- 		SCHED_SWITCH INPUTS -->
+		<transitionInput id="sched_switch">
+			<event eventName="sched_switch"/>
+		</transitionInput>
+<!-- 		MATCHING INPUTS -->
+		<transitionInput id="thread_thread">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="thread" />
+						</stateValue>
+						<stateValue type="query" >
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="Current_thread" />
+						</stateValue>
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+<!-- 		SCHED_SWITCH FSM ACTIONS -->
+		<action id="update Current_thread">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentCPU" />
+				<stateAttribute type="constant" value="Current_thread" />
+				<stateValue type="eventField" value="next_tid" />
+			</stateChange>
+		</action>
+<!-- 		SYSCALL FSM ACTIONS -->
+		<action id="sys_chroot_founded">
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentThread" />
+				<stateAttribute type="constant" value="syscall" />
+				<stateAttribute type="constant" value="name" />
+				<stateValue type="eventName"/>
+			</stateChange>
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu"/>
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="thread" />
+				<stateValue type="query">
+					<stateAttribute type="location" value="CurrentCPU" />
+					<stateAttribute type="constant" value="Current_thread" />
+				</stateValue>
+			</stateChange>
+		</action>
+		<action id="warning_chroot_jail_escape">
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="string" value="chroot_jail_esc"/>
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="tid" type="int">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="thread" />
+						</stateValue>
+					</synField>
+				</synContent>
+			</synEvent>
+		</action>
+<!-- 		SYSCALL FSM ACTIONS -->
+<!-- 		SYSCALL -->
+		<fsm id="chroot">
+			<stateTable>
+				<stateDefinition name="wait_syscall_entry_chroot">
+					<transition input="syscall_entry_chroot" next="syscall_entry_chroot" action="sys_chroot_founded" saveSpecialFields="true"/>
+					<transition input="#other" next="wait_syscall_entry_chroot" />
+				</stateDefinition>
+				<stateDefinition name="syscall_entry_chroot" >
+					<transition input="syscall_exit_chroot:thread_thread" next="syscall_exit_chroot" saveSpecialFields="true" clearSpecialFields="true"/>
+					<transition input="#other" next="syscall_entry_chroot" />
+				</stateDefinition>
+				<stateDefinition name="syscall_exit_chroot">
+					<transition input="syscall_entry_chdir:thread_thread" next="syscall_entry_chdir" saveSpecialFields="true"/>
+					<transition input="syscall_entry_open:thread_thread" next="syscall_entry_open" saveSpecialFields="true"/>
+					<transition input="syscall_entry_exit:thread_thread" next="syscall_entry_exit" saveSpecialFields="true"/>
+					<transition input="#other" next="syscall_exit_chroot"/>
+				</stateDefinition>
+				<stateDefinition name="syscall_entry_chdir" >
+					<transition input="syscall_exit_chdir:thread_thread" next="exit_fsm" saveSpecialFields="true"/>
+					<transition input="#other" next="syscall_entry_chdir" />
+				</stateDefinition>
+				<stateDefinition name="syscall_entry_exit" >
+					<transition input="syscall_exit_exit:thread_thread" next="exit_fsm" saveSpecialFields="true"/>
+					<transition input="#other" next="syscall_entry_exit" />
+				</stateDefinition>
+				<stateDefinition name="syscall_entry_open" >
+					<transition input="syscall_exit_open:thread_thread" next="chrootAttack" action="warning_chroot_jail_escape" saveSpecialFields="true"/>
+					<transition input="#other" next="syscall_entry_open" />
+				</stateDefinition>
+				<stateDefinition name="exit_fsm">
+					<transition input="#other" next="exit_fsm"/>
+				</stateDefinition>
+				<stateDefinition name="chrootAttack">
+					<transition input="#other" next="chrootAttack"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait_syscall_entry_chroot"/>
+			<enState id="chrootAttack" />
+			<abandonState id="exit_fsm" />
+		</fsm>
+<!-- 		SCHED_SWITCH -->
+		<fsm id="sched_switch" multiple="false">
+			<precondition input="sched_switch"/>
+			<stateTable>
+				<stateDefinition name="sched_switch">
+					<transition input="sched_switch" next="sched_switch" action="update Current_thread" />
+					<transition input="#other" next="sched_switch" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="sched_switch"/>
+		</fsm>
+	</filterHandler>
+</filter>
+</tmfxml>

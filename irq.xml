@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
+<filter version="0" id="my.kernel.irq.1.0.filter.provider">
+	<head>
+		<traceType id="org.eclipse.linuxtools.lttng2.kernel.tracetype" />
+		<label value="My kernel irq XML 1.0 Filter" />
+	</head>
+	
+	<definedField name="filename" id="filename"/>
+	<definedField name="fd" id="fd"/>
+	<definedField name="ret" id="ret"/>
+	<definedField name="flags" id="flags"/>
+	<definedField name="offset" id="offset"/>
+	<definedField name="fd_in" id="fd_in"/>
+	<definedField name="fd_out" id="fd_out"/>
+	<definedField name="uservaddr" id="uservaddr"/>
+	<definedField name="upeer_sockaddr" id="upeer_sockaddr"/>
+	<location id="CurrentThread">
+            <stateAttribute type="constant" value="Threads" />
+            <stateAttribute type="query">
+                <stateAttribute type="constant" value="CPUs" />
+                <stateAttribute type="eventField" value="cpu" />
+                <stateAttribute type="constant" value="Current_thread" />
+            </stateAttribute>
+        </location>
+        <location id="CurrentCPU">
+            <stateAttribute type="constant" value="CPUs" />
+            <stateAttribute type="eventField" value="cpu" />
+        </location>
+	<location id="CurrentScenario">
+            <stateAttribute type="constant" value="filter" />
+            <stateAttribute type="constant" value="#arg_0" />
+	    <stateAttribute type="constant" value="scenarios" />
+	    <stateAttribute type="constant" value="#arg_1" />
+        </location>
+	<filterHandler filterName="FSMs">
+		<initialFsm id="sched_switch|irq_handler|softirq"/>
+<!-- 		SYSCALL INPUTS -->
+		<transitionInput id="tid_2652">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="Current_thread" />
+						</stateValue>
+						<stateValue type="long" value="2652" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+<!-- 		IRQ INPUTS -->
+		<transitionInput id="XirqX">
+			<event eventName="*irq*"/>
+		</transitionInput>
+		<transitionInput id="irq_handler_entry">
+			<event eventName="irq_handler_entry" />
+		</transitionInput>
+		<transitionInput id="irq_handler_exit">
+			<event eventName="irq_handler_exit"/>
+		</transitionInput>
+		<transitionInput id="softirq_raise">
+			<event eventName="softirq_raise"/>
+		</transitionInput>
+		<transitionInput id="softirq_entry">
+			<event eventName="softirq_entry"/>
+		</transitionInput>
+		<transitionInput id="softirq_exit">
+			<event eventName="softirq_exit"/>
+		</transitionInput>
+<!-- 		SCHED_SWITCH INPUTS -->
+		<transitionInput id="sched_switch">
+			<event eventName="sched_switch"/>
+		</transitionInput>
+<!-- 		MATCHING INPUTS -->
+		<transitionInput id="cpu_cpu">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="cpu" />
+						</stateValue>
+						<stateValue type="eventField" value="cpu" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+<!-- 		SCHED_SWITCH FSM ACTIONS -->
+		<action id="update Current_thread">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentCPU" />
+				<stateAttribute type="constant" value="Current_thread" />
+				<stateValue type="eventField" value="next_tid" />
+			</stateChange>
+		</action>
+<!-- 		 IRQ FSM ACTIONS-->
+		<action id="irq_handler_entry">
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentIRQ" />
+			    <stateValue type="eventField" value="cpu" />
+			</stateChange>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="irq" />
+			    <stateValue type="eventField" value="irq" />
+			</stateChange>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="name" />
+			    <stateValue type="eventField" value="name" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="constant" value="filter" />
+				<stateAttribute type="constant" value="#arg_0" />
+				<stateAttribute type="constant" value="scenarios" />
+				<stateAttribute type="constant" value="#arg_1" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu" />
+			</stateChange>
+		</action>
+		<action id="softirq_entry">
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentSoftIRQ" />
+			    <stateValue type="eventField" value="cpu" />
+			</stateChange>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="vec" />
+			    <stateValue type="eventField" value="vec" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="constant" value="filter" />
+				<stateAttribute type="constant" value="#arg_0" />
+				<stateAttribute type="constant" value="scenarios" />
+				<stateAttribute type="constant" value="#arg_1" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu" />
+			</stateChange>
+		</action>
+		<action id="irq_handler_exit">
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentIRQ" />
+			    <stateValue type="null" />
+			</stateChange>
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="string" value="irq"/>
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="cpu" type="long">
+						<stateValue type="eventField" value="cpu" />
+					</synField>
+					<synField name="irq" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="irq" />
+						</stateValue>
+					</synField>
+					<synField name="name" type="string">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="name" />
+						</stateValue>
+					</synField>
+					<synField name="ret" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="ret" />
+						</stateValue>
+					</synField>
+				</synContent>
+			</synEvent>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="irq" />
+			    <stateValue type="null"/>
+			</stateChange>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="name" />
+			    <stateValue type="null" />
+			</stateChange>
+		</action>
+		<action id="softirq_exit">
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentSoftIRQ" />
+			    <stateValue type="null" />
+			</stateChange>
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="string" value="softirq"/>
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="cpu" type="long">
+						<stateValue type="eventField" value="cpu" />
+					</synField>
+					<synField name="vec" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="vec" />
+						</stateValue>
+					</synField>
+				</synContent>
+			</synEvent>
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentCPU" />
+				<stateAttribute type="constant" value="vec" />
+				<stateValue type="null"/>
+			</stateChange>
+		</action>
+<!-- 		SCHED_SWITCH -->
+		<fsm id="sched_switch" multiple="false">
+			<precondition input="sched_switch"/>
+			<stateTable>
+				<stateDefinition name="sched_switch">
+					<transition input="sched_switch" next="sched_switch" action="update Current_thread" />
+					<transition input="#other" next="sched_switch" />
+				</stateDefinition>
+				<stateDefinition name="fake_end">
+					<transition input="#other" next="fake_end"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="sched_switch"/>
+			<endState id="fake_end" />
+		</fsm>
+<!-- 		IRQ FSM -->
+		<fsm id="irq_handler">
+			<precondition input="XirqX" />
+			<stateTable>
+				<stateDefinition name="wait irq_entry">
+					<transition input="irq_handler_entry" next="wait irq_exit" action="irq_handler_entry" />
+					<transition input="#other" next="wait irq_entry"/>
+				</stateDefinition>
+				<stateDefinition name="wait irq_exit">
+					<transition input="irq_handler_exit:cpu_cpu" next="irq" action="irq_handler_exit" />
+					<transition input="#other" next="wait irq_exit"/>
+				</stateDefinition>
+				<stateDefinition name="irq">
+					<transition input="#other" next="irq"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait irq_entry"/>
+			<endState id="irq" />
+		</fsm>
+		<fsm id="softirq">
+			<precondition input="XirqX" />
+			<stateTable>
+				<stateDefinition name="wait irq_entry">
+				  <transition input="softirq_entry" next="wait irq_exit" action="softirq_entry" />
+				  <transition input="#other" next="wait irq_entry"/>
+				</stateDefinition>
+				<stateDefinition name="wait irq_exit">
+					<transition input="softirq_exit:cpu_cpu" next="irq" action="softirq_exit" />
+					<transition input="#other" next="wait irq_exit"/>
+				</stateDefinition>
+				<stateDefinition name="irq">
+					<transition input="#other" next="irq"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait irq_entry"/>
+			<endState id="irq" />
+		</fsm>
+	</filterHandler>
+</filter>
+</tmfxml>

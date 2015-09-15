@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
+<filter version="0" id="my.kernel.fd.follower.filter.provider">
+	<head>
+		<traceType id="org.eclipse.linuxtools.lttng2.kernel.tracetype" />
+		<label value="My kernel close XML Filter" />
+	</head>
+	
+	<definedField name="filename" id="filename"/>
+	<definedField name="fd" id="fd"/>
+	<definedField name="ret" id="ret"/>
+	<definedField name="flags" id="flags"/>
+	<definedField name="offset" id="offset"/>
+	<definedField name="fd_in" id="fd_in"/>
+	<definedField name="fd_out" id="fd_out"/>
+	<definedField name="uservaddr" id="uservaddr"/>
+	<definedField name="upeer_sockaddr" id="upeer_sockaddr"/>
+	<location id="CurrentThread">
+            <stateAttribute type="constant" value="Threads" />
+            <stateAttribute type="query">
+                <stateAttribute type="constant" value="CPUs" />
+                <stateAttribute type="eventField" value="cpu" />
+                <stateAttribute type="constant" value="Current_thread" />
+            </stateAttribute>
+        </location>
+        <location id="CurrentCPU">
+            <stateAttribute type="constant" value="CPUs" />
+            <stateAttribute type="eventField" value="cpu" />
+        </location>
+	<location id="CurrentScenario">
+            <stateAttribute type="constant" value="filter" />
+            <stateAttribute type="constant" value="#arg_0" />
+	    <stateAttribute type="constant" value="scenarios" />
+	    <stateAttribute type="constant" value="#arg_1" />
+        </location>
+	<filterHandler filterName="FSMs">
+		<initialFsm id="sched_switch|close"/>
+<!-- 		SYSCALL INPUTS -->
+		<transitionInput id="syscall_entry_close">
+			<event eventName="syscall_entry_close"/>
+		</transitionInput>
+		<transitionInput id="syscall_exit_close">
+			<event eventName="syscall_exit_close"/>
+		</transitionInput>
+<!-- 		SCHED_SWITCH INPUTS -->
+		<transitionInput id="sched_switch">
+			<event eventName="sched_switch"/>
+		</transitionInput>
+<!-- 		MATCHING INPUTS -->
+		<transitionInput id="thread_thread">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="thread" />
+						</stateValue>
+						<stateValue type="query" >
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="Current_thread" />
+						</stateValue>
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+<!-- 		SCHED_SWITCH FSM ACTIONS -->
+		<action id="update Current_thread">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentCPU" />
+				<stateAttribute type="constant" value="Current_thread" />
+				<stateValue type="eventField" value="next_tid" />
+			</stateChange>
+		</action>
+<!-- 		SYSCALL FSM ACTIONS -->
+		<action id="sys_x_founded">
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentThread" />
+				<stateAttribute type="constant" value="syscall" />
+				<stateAttribute type="constant" value="name" />
+				<stateValue type="eventName"/>
+			</stateChange>
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu"/>
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="thread" />
+				<stateValue type="query">
+					<stateAttribute type="location" value="CurrentCPU" />
+					<stateAttribute type="constant" value="Current_thread" />
+				</stateValue>
+			</stateChange>
+		</action>
+<!-- 		SYSCALL FSM ACTIONS -->
+<!-- 		SYSCALL -->
+		<fsm id="close">
+			<stateTable>
+				<stateDefinition name="wait_syscall_entry_x">
+					<transition input="syscall_entry_read" next="syscall_entry_x" action="sys_x_founded" saveSpecialFields="true"/>
+					<transition input="#other" next="wait_syscall_entry_x" />
+				</stateDefinition>
+				<stateDefinition name="syscall_entry_x" >
+					<transition input="syscall_exit_read:thread_thread" next="syscall_exit_x" saveSpecialFields="true" clearSpecialFields="true"/>
+					<transition input="#other" next="syscall_entry_x" />
+				</stateDefinition>
+				<stateDefinition name="syscall_exit_x">
+					<transition input="#other" next="syscall_exit_x"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait_syscall_entry_x"/>
+			<endState id="syscall_exit_x" />
+		</fsm>
+<!-- 		SCHED_SWITCH -->
+		<fsm id="sched_switch" multiple="false">
+			<precondition input="sched_switch"/>
+			<stateTable>
+				<stateDefinition name="sched_switch">
+					<transition input="sched_switch" next="sched_switch" action="update Current_thread" />
+					<transition input="#other" next="sched_switch" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="sched_switch"/>
+		</fsm>
+	</filterHandler>
+</filter>
+</tmfxml>

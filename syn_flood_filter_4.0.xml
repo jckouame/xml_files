@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
+<filter version="0" id="my.kernel.syn.flood.detector.4.0">
+	<head>
+		<traceType id="org.eclipse.linuxtools.lttng2.kernel.tracetype" />
+		<label value="My kernel XML syn flood detector 4.0" />
+<!-- 		<analysis id="my.ust.2610.state.provider" /> -->
+	</head>
+	
+	<definedValue name="MAX_TENTATIVE" value="100" />
+	
+	<location id="CurrentProcessStatus">
+	      <stateAttribute type="constant" value="app" />
+	      <stateAttribute type="eventField" value="pid" />
+	</location>
+	<location id="states">
+		<stateAttribute type="constant" value="filter" />
+		<stateAttribute type="constant" value="#arg_0" />
+		<stateAttribute type="constant" value="scenarios" />
+		<stateAttribute type="constant" value="#arg_1" />
+		<stateAttribute type="constant" value="state" />
+	</location>
+	
+	<filterHandler filterName="syn flood detector">
+		<initialFsm id="halfOpenTCP|SYNFloodAttack"/>
+		<transitionInput id="syn">
+			<event eventName="inet_sock_local_in">
+				<if>
+					<conditionFilterEvent>
+						<field name="flags" />
+						<stateValue type="long" value="20482" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="syn_ack">
+			<event eventName="inet_sock_local_out">
+				<if>
+					<or>
+						<conditionFilterEvent>
+							<field name="flags" />
+							<stateValue type="long" value="24594" />
+						</conditionFilterEvent>
+						<conditionFilterEvent>
+							<field name="flags" />
+							<stateValue type="long" value="32786" />
+						</conditionFilterEvent>
+					</or>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="ack">
+			<event eventName="#any">
+				<if>
+					<or>
+						<conditionFilterEvent>
+							<field name="flags" />
+							<stateValue type="long" value="20496" />
+						</conditionFilterEvent>
+						<conditionFilterEvent>
+							<field name="flags" />
+							<stateValue type="long" value="24592" />
+						</conditionFilterEvent>
+					</or>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="reset">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<field name="flags" />
+						<stateValue type="long" value="20484" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="seq_match">
+			<event eventName="inet_sock_local_in">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="location" value="states" />
+							<stateAttribute type="constant" value="waitSyn" />
+							<stateAttribute type="constant" value="nextSeq" />
+						</stateValue>
+						<stateValue type="eventField" value="seq"/>
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="ack_seq_match">
+			<event eventName="inet_sock_local_out">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="location" value="states" />
+							<stateAttribute type="constant" value="waitSyn" />
+							<stateAttribute type="constant" value="nextSeq" />
+						</stateValue>
+						<stateValue type="eventField" value="ack_seq"/>
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="timeout">
+			<time>
+				<conditionFilterByTime>
+					<timeCondition>
+						<elapsedTime unit="s">
+							<less since="waitAckClient" value="3" />
+						</elapsedTime>
+					</timeCondition>
+				</conditionFilterByTime>
+			</time>
+		</transitionInput>
+		<transitionInput id="half tcp open">
+			<event eventName="syn/half_TCP_open_event"/>
+		</transitionInput>
+		<transitionInput id="frequent halfOpenTCP">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateAttribute type="constant" value="filter" />
+						<stateAttribute type="constant" value="#arg_0" />
+						<stateAttribute type="constant" value="scenarios" />
+						<stateAttribute type="constant" value="#arg_1" />
+						<stateAttribute type="constant" value="halfOpenTCPCount" />
+						<stateValue type="int" value="$MAX_TENTATIVE" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<action id="save infos">
+			<stateChange>
+				<stateAttribute type="location" value="states" />
+				<stateAttribute type="constant" value="#arg_2" />
+				<stateAttribute type="constant" value="seq" />
+				<stateValue type="eventField" value="seq" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="states" />
+				<stateAttribute type="constant" value="#arg_2" />
+				<stateAttribute type="constant" value="nextSeq" />
+				<stateValue type="eventField" value="seq" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="states" />
+				<stateAttribute type="constant" value="#arg_2" />
+				<stateAttribute type="constant" value="nextSeq" />
+				<stateValue type="long" increment="true" value="1"/>
+			</stateChange>
+		</action>
+		<action id="half open event" >
+			<synEvent>
+				<synType eventName="half_TCP_open_event" />
+				<synContent>
+					<synField name="seq" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="states" />
+							<stateAttribute type="constant" value="waitSyn" />
+							<stateAttribute type="constant" value="seq" />
+						</stateValue>
+					</synField>
+					<synField name="reset_seq" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="states" />
+							<stateAttribute type="constant" value="waitSyn" />
+							<stateAttribute type="constant" value="nextSeq" />
+						</stateValue>
+					</synField>
+				</synContent>
+			</synEvent>
+		</action>
+		<action id="save half TCP count" >
+			<stateChange>
+				<stateAttribute type="constant" value="filter" />
+				<stateAttribute type="constant" value="#arg_0" />
+				<stateAttribute type="constant" value="scenarios" />
+				<stateAttribute type="constant" value="#arg_1" />
+				<stateAttribute type="constant" value="halfOpenTCPCount" />
+				<stateValue type="int" increment="true" value="1"/>
+			</stateChange>
+		</action>
+		<action id="syn flood event" >
+			<synEvent>
+				<synType eventName="syn_flood" />
+			</synEvent>
+		</action>
+		<fsm id="halfOpenTCP">
+			<stateTable>
+				<stateDefinition name="waitSyn">
+					<transition input="syn" next="waitSynAck" action="save infos" />
+					<transition input="#other" next="waitSyn" />
+				</stateDefinition>
+				<stateDefinition name="waitSynAck" >
+					<transition input="ack_seq_match:syn_ack" next="waitAckClient"/>
+					<transition input="#other" next="waitSynAck" />
+				</stateDefinition>
+				<stateDefinition name="waitAckClient">
+					<transition input="seq_match:ack" next="success"/>
+					<transition input="seq_match:reset" next="halfOpenTCP" action="half open event"/>
+<!-- 					<transition input="timeout" next="halfOpenTCP" action="half open event"/> -->
+					<transition input="#other" next="waitAckClient" />
+				</stateDefinition>
+				<stateDefinition name="success">
+					<transition input="#other" next="success" />
+				</stateDefinition>
+				<stateDefinition name="halfOpenTCP">
+					<transition input="#other" next="halfOpenTCP" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="waitSyn"/>
+			<endState id="halfOpenTCP" />
+			<abandonState id="success"/>
+		</fsm>
+		<fsm id="SYNFloodAttack" multiple="false">
+			<stateTable>
+				<stateDefinition name="start">
+					<transition input="half tcp open" next="halfOpenTCPDetected" action="save half TCP count" />
+					<transition input="#other" next="start"/>
+				</stateDefinition>
+				<stateDefinition name="waitHalfOpenTCPEvent">
+					<transition input="half tcp open" next="halfOpenTCPDetected" action="save half TCP count" />
+					<transition input="#other" next="waitHalfOpenTCPEvent" />
+				</stateDefinition>
+				<stateDefinition name="halfOpenTCPDetected" automatic="true">
+					<transition input="frequent halfOpenTCP" next="attacked" action="syn flood event" />
+					<transition input="#other" next="waitHalfOpenTCPEvent" />
+				</stateDefinition>
+				<stateDefinition name="attacked" >
+					<transition input="#other" next="attacked" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="start"/>
+			<endState id="attacked" />
+		</fsm>
+	</filterHandler>
+</filter>
+</tmfxml>

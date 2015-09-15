@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
+<filter version="0" id="my.ust.2610.filter.provider">
+	<head>
+		<traceType id="org.eclipse.linuxtools.lttng2.ust.tracetype" />
+		<label value="My 2610 XML Filters" />
+<!-- 		<analysis id="my.ust.2610.state.provider" /> -->
+	</head>
+	
+	<definedValue name="MAX_TENTATIVE" value="1" />
+	
+	<location id="CurrentProcessStatus">
+	      <stateAttribute type="constant" value="app" />
+	      <stateAttribute type="eventField" value="pid" />
+	</location>
+	<location id="states">
+		<stateAttribute type="constant" value="filter" />
+		<stateAttribute type="constant" value="event_matching" />
+		<stateAttribute type="constant" value="scenarios" />
+		<stateAttribute type="constant" value="#arg_1" />
+		<stateAttribute type="constant" value="state" />
+	</location>
+	
+	<filterHandler filterName="event_matching">
+		<initialFsm id="fsm2"/>
+		<transitionInput id="input1">
+			<event eventName="interface:create_pipe|central:create_pipe|site:create_pipe"/>
+		</transitionInput>
+		<transitionInput id="input2">
+			<event eventName="interface:close_pipe_descriptor|central:close_pipe_descriptor|site:close_pipe_descriptor">
+				<if>
+					<conditionFilterEvent>
+						<field name="fd1" />
+						<stateValue type="long" value="41" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="input3">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+<!-- 						<attribute> -->
+							<stateValue type="query">
+								<stateAttribute type="location" value="states" />
+								<stateAttribute type="constant" value="state1" />
+								<stateAttribute type="constant" value="pid" />
+							</stateValue>
+<!-- 						</attribute> -->
+<!-- 						<attribute> -->
+							<stateValue type="query">
+								<stateAttribute type="location" value="states" />
+								<stateAttribute type="constant" value="state2" />
+								<stateAttribute type="constant" value="pid" />
+							</stateValue>
+<!-- 						</attribute> -->
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="input4">
+			<time>
+				<and>
+					<conditionFilterByTime>
+						<timeCondition>
+							<timeRange unit="ns">
+								<in begin="0" end="1404756672772182156"/>
+							</timeRange>
+						</timeCondition>
+					</conditionFilterByTime>
+					<conditionFilterByTime>
+						<timeCondition>
+							<elapsedTime unit="ns">
+								<more since="state1" value="150000" />
+							</elapsedTime>
+						</timeCondition>
+					</conditionFilterByTime>
+				</and>
+			</time>
+		</transitionInput>
+		<transitionInput id="input5">
+			<event eventName="createCloseEvent" />
+		</transitionInput>
+		<transitionInput id="input6">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateAttribute type="constant" value="filter" />
+						<stateAttribute type="constant" value="event_matching" />
+						<stateAttribute type="constant" value="scenarios" />
+						<stateAttribute type="constant" value="#arg_1" />
+						<stateAttribute type="constant" value="OpenCloseCount" />
+						<stateValue type="int" value="1" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<action id="action1">
+			<stateChange>
+				<stateAttribute type="location" value="states" />
+				<stateAttribute type="constant" value="#arg_2" />
+				<stateAttribute type="constant" value="pid" />
+				<stateValue type="eventField" value="pid" />
+			</stateChange>
+			<stateChange>	
+				<stateAttribute type="location" value="states" />
+				<stateAttribute type="constant" value="#arg_2" />
+				<stateAttribute type="constant" value="fd1" />
+				<stateValue type="eventField" value="fd1" />
+			</stateChange>
+		</action>
+		<action id="action2" >
+			<synEvent>
+				<synType eventName="createCloseEvent" />
+				<synContent>
+					<synField name="pid" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="states" />
+							<stateAttribute type="constant" value="state2" />
+							<stateAttribute type="constant" value="pid" />
+						</stateValue>
+					</synField>
+					<synField name="fd1" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="states" />
+							<stateAttribute type="constant" value="state2" />
+							<stateAttribute type="constant" value="fd1" />
+						</stateValue>
+					</synField>
+					<synField name="port" type="long" value="80"/>
+				</synContent>
+			</synEvent>
+		</action>
+		<action id="action3" >
+			<synEvent>
+				<synType eventName="#emptyEvent"/>
+			</synEvent>
+		</action>
+		<action id="action4" >
+			<stateChange>
+<!-- 				<stateValue type="increment"> -->
+				<stateAttribute type="constant" value="filter" />
+				<stateAttribute type="constant" value="event_matching" />
+				<stateAttribute type="constant" value="scenarios" />
+				<stateAttribute type="constant" value="#arg_1" />
+<!-- 				<stateAttribute type="constant" value="#arg_2" /> -->
+				<stateAttribute type="constant" value="OpenCloseCount"/>
+				<stateValue type="int" increment="true" value="1"/>
+			</stateChange>
+		</action>
+		<action id="action5">
+			<fsmScheduleAction id="fsm1" />
+		</action>
+		<fsm id="fsm1">
+			<stateTable>
+				<stateDefinition name="state1">
+					<transition input="input1" next="state2" action="action1" />
+					<transition input="#other" next="state1" />
+				</stateDefinition>
+				<stateDefinition name="state2">
+					<transition input="input2" next="state3" action="action1" />
+					<transition input="#other" next="state2" />
+				</stateDefinition>
+				<stateDefinition name="state3" automatic="true" >
+					<transition input="input3" next="state4" />
+					<transition input="#other" next="state6" />
+				</stateDefinition>
+				<stateDefinition name="state4" automatic="true" >
+					<transition input="input4" next="state5" action="action2"/>
+					<transition input="#other" next="state6"/>
+				</stateDefinition>
+				<stateDefinition name="state5">
+					<transition input="#other" next="state5"/>
+				</stateDefinition>
+				<stateDefinition name="state6">
+					<transition input="#other" next="state6" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="state1"/>
+			<endState id="state5" />
+			<abandonState id="state6"/>
+		</fsm>
+		<fsm id="fsm2" multiple="false">
+			<stateTable>
+				<stateDefinition name="state7">
+					<transition input="input5" next="state8" action="action4" />
+					<transition input="#other" next="state7" action="action5" />
+				</stateDefinition>
+				<stateDefinition name="state8" automatic="true" >
+					<transition input="input6" next="state9" action="action1" />
+					<transition input="#other" next="state7" />
+				</stateDefinition>
+				<stateDefinition name="state9" >
+					<transition input="#other" next="state9" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="state7"/>
+			<endState id="state9" />
+		</fsm>
+	</filterHandler>
+</filter>
+</tmfxml>

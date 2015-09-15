@@ -1,0 +1,809 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
+<filter version="0" id="my.kernel.multiple.2.0.filter.provider">
+	<head>
+		<traceType id="org.eclipse.linuxtools.lttng2.kernel.tracetype" />
+		<label value="My kernel multiple XML 2.0 Filter" />
+	</head>
+	
+	<definedField name="filename" id="filename"/>
+	<definedField name="fd" id="fd"/>
+	<definedField name="ret" id="ret"/>
+	<definedField name="flags" id="flags"/>
+	<definedField name="offset" id="offset"/>
+	<definedField name="fd_in" id="fd_in"/>
+	<definedField name="fd_out" id="fd_out"/>
+	<definedField name="uservaddr" id="uservaddr"/>
+	<definedField name="upeer_sockaddr" id="upeer_sockaddr"/>
+	<location id="CurrentThread">
+            <stateAttribute type="constant" value="Threads" />
+            <stateAttribute type="query">
+                <stateAttribute type="constant" value="CPUs" />
+                <stateAttribute type="eventField" value="cpu" />
+                <stateAttribute type="constant" value="Current_thread" />
+            </stateAttribute>
+        </location>
+        <location id="CurrentCPU">
+            <stateAttribute type="constant" value="CPUs" />
+            <stateAttribute type="eventField" value="cpu" />
+        </location>
+	<location id="CurrentScenario">
+            <stateAttribute type="constant" value="filter" />
+            <stateAttribute type="constant" value="#arg_0" />
+	    <stateAttribute type="constant" value="scenarios" />
+	    <stateAttribute type="constant" value="#arg_1" />
+        </location>
+	<filterHandler filterName="FSMs">
+		<initialFsm id="sched_switch|syscall|fileAccess|irq_handler|softirq|socket_connect|socket_accept|process_cloned|process_scheduled|exit_process"/>
+<!-- 		<initialFsm id="sched_switch|syscall|fileAccess|irq_handler|softirq"/> -->
+<!-- 		SYSCALL INPUTS -->
+		<transitionInput id="tid_2652">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="Current_thread" />
+						</stateValue>
+						<stateValue type="long" value="2652" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="sys_entry">
+			<event eventName="sys_entry"/>
+		</transitionInput>
+		<transitionInput id="sys_entry_callsite">
+			<event eventName="sys_entry_callsite"/>
+		</transitionInput>
+		<transitionInput id="sys_x">
+			<event eventName="sys_*"/>
+		</transitionInput>
+		<transitionInput id="exit_syscall">
+			<event eventName="exit_syscall"/>
+		</transitionInput>
+		<transitionInput id="sys_socket">
+			<event eventName="sys_socket"/>
+		</transitionInput>
+<!-- 		IRQ INPUTS -->
+		<transitionInput id="XirqX">
+			<event eventName="*irq*"/>
+		</transitionInput>
+		<transitionInput id="irq_handler_entry">
+			<event eventName="irq_handler_entry" />
+		</transitionInput>
+		<transitionInput id="irq_handler_exit">
+			<event eventName="irq_handler_exit"/>
+		</transitionInput>
+		<transitionInput id="softirq_raise">
+			<event eventName="softirq_raise"/>
+		</transitionInput>
+		<transitionInput id="softirq_entry">
+			<event eventName="softirq_entry"/>
+		</transitionInput>
+		<transitionInput id="softirq_exit">
+			<event eventName="softirq_exit"/>
+		</transitionInput>
+<!-- 		PROCESS_MANAGEMENT INPUTS -->
+		<transitionInput id="sys_clone">
+			<event eventName="sys_clone"/>
+		</transitionInput>
+		<transitionInput id="sched_migrate_task">
+			<event eventName="sched_migrate_task"/>
+		</transitionInput>
+		<transitionInput id="sched_process_fork">
+			<event eventName="sched_process_fork"/>
+		</transitionInput>
+		<transitionInput id="sched_wakeup_new">
+			<event eventName="sched_wakeup_new"/>
+		</transitionInput>
+		<transitionInput id="sys_setpgid">
+			<event eventName="sys_setpgid"/>
+		</transitionInput>
+		<transitionInput id="sys_exit_group">
+			<event eventName="sys_exit_group"/>
+		</transitionInput>
+		<transitionInput id="sched_process_exit">
+			<event eventName="sched_process_exit"/>
+		</transitionInput>
+		<transitionInput id="signal_generate">
+			<event eventName="signal_generate"/>
+		</transitionInput>
+		<transitionInput id="sched_ttwu">
+			<event eventName="sched_ttwu"/>
+		</transitionInput>
+<!-- 		SCHED_SWITCH INPUTS -->
+		<transitionInput id="sched_switch">
+			<event eventName="sched_switch"/>
+		</transitionInput>
+<!--   SYNTHETIC EVENTS INPUT-->
+		<transitionInput id="syn/X">
+			<event eventName="syn/*"/>
+		</transitionInput>
+		<transitionInput id="syn/sys_open">
+			<event eventName="syn/sys_open"/>
+		</transitionInput>
+		<transitionInput id="syn/sys_close">
+			<event eventName="syn/sys_close"/>
+		</transitionInput>
+		<transitionInput id="syn/sys_accept">
+			<event eventName="syn/sys_accept"/>
+		</transitionInput>
+		<transitionInput id="syn/sys_connect">
+			<event eventName="syn/sys_connect"/>
+		</transitionInput>
+<!-- 		MATCHING INPUTS -->
+		<transitionInput id="thread_thread">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="thread" />
+						</stateValue>
+						<stateValue type="query" >
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="Current_thread" />
+						</stateValue>
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="cpu_cpu">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="cpu" />
+						</stateValue>
+						<stateValue type="eventField" value="cpu" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="close_match">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="constant" value="filter" />
+							<stateAttribute type="constant" value="#arg_0" />
+							<stateAttribute type="constant" value="scenarios"/>
+							<stateAttribute type="constant" value="#arg_1"/>
+							<stateAttribute type="constant" value="specialFields"/>
+							<stateAttribute type="constant" value="ret"/>
+						</stateValue>
+						<stateValue type="eventField" value="fd" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="close_match_connect">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="constant" value="filter" />
+							<stateAttribute type="constant" value="#arg_0" />
+							<stateAttribute type="constant" value="scenarios"/>
+							<stateAttribute type="constant" value="#arg_1"/>
+							<stateAttribute type="constant" value="specialFields"/>
+							<stateAttribute type="constant" value="fd"/>
+						</stateValue>
+						<stateValue type="eventField" value="fd" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="close_match_accept">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query">
+							<stateAttribute type="constant" value="filter" />
+							<stateAttribute type="constant" value="#arg_0" />
+							<stateAttribute type="constant" value="scenarios"/>
+							<stateAttribute type="constant" value="#arg_1"/>
+							<stateAttribute type="constant" value="specialFields"/>
+							<stateAttribute type="constant" value="ret"/>
+						</stateValue>
+						<stateValue type="eventField" value="fd" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+<!-- 		SCHED_SWITCH FSM ACTIONS -->
+		<action id="update Current_thread">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentCPU" />
+				<stateAttribute type="constant" value="Current_thread" />
+				<stateValue type="eventField" value="next_tid" />
+			</stateChange>
+		</action>
+<!-- 		SYSCALL FSM ACTIONS -->
+		<action id="sys_x_founded">
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentThread" />
+				<stateAttribute type="constant" value="syscall" />
+				<stateAttribute type="constant" value="name" />
+				<stateValue type="eventName"/>
+			</stateChange>
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu"/>
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="thread" />
+				<stateValue type="query">
+					<stateAttribute type="location" value="CurrentCPU" />
+					<stateAttribute type="constant" value="Current_thread" />
+				</stateValue>
+			</stateChange>
+		</action>
+		<action id="exit_syscall_founded">
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentThread" />
+							<stateAttribute type="constant" value="syscall" />
+							<stateAttribute type="constant" value="name" />
+						</stateValue>
+					</eventName>
+				</synType>
+			</synEvent>
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="syscall" />
+				<stateAttribute type="constant" value="name" />
+				<stateValue type="null"/>
+			</stateChange>
+		</action>
+<!-- 		SYSCALL FSM ACTIONS -->
+<!-- 		FILEACCESS FSM ACTIONS -->
+		<action id="syn/fileAccess" >
+			<synEvent>
+				<synType eventName="fileAccess" />
+			</synEvent>
+		</action>
+<!-- 		FILEACCESS FSM ACTIONS -->
+<!-- 		 IRQ FSM ACTIONS-->
+		<action id="irq_handler_entry">
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentIRQ" />
+			    <stateValue type="eventField" value="cpu" />
+			</stateChange>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="irq" />
+			    <stateValue type="eventField" value="irq" />
+			</stateChange>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="name" />
+			    <stateValue type="eventField" value="name" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="constant" value="filter" />
+				<stateAttribute type="constant" value="#arg_0" />
+				<stateAttribute type="constant" value="scenarios" />
+				<stateAttribute type="constant" value="#arg_1" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu" />
+			</stateChange>
+		</action>
+		<action id="softirq_entry">
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentSoftIRQ" />
+			    <stateValue type="eventField" value="cpu" />
+			</stateChange>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="vec" />
+			    <stateValue type="eventField" value="vec" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="constant" value="filter" />
+				<stateAttribute type="constant" value="#arg_0" />
+				<stateAttribute type="constant" value="scenarios" />
+				<stateAttribute type="constant" value="#arg_1" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu" />
+			</stateChange>
+		</action>
+		<action id="irq_handler_exit">
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentIRQ" />
+			    <stateValue type="null" />
+			</stateChange>
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="string" value="irq"/>
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="cpu" type="long">
+						<stateValue type="eventField" value="cpu" />
+					</synField>
+					<synField name="irq" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="irq" />
+						</stateValue>
+					</synField>
+					<synField name="name" type="string">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="name" />
+						</stateValue>
+					</synField>
+					<synField name="ret" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="ret" />
+						</stateValue>
+					</synField>
+				</synContent>
+			</synEvent>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="irq" />
+			    <stateValue type="null"/>
+			</stateChange>
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentCPU" />
+			    <stateAttribute type="constant" value="name" />
+			    <stateValue type="null" />
+			</stateChange>
+		</action>
+		<action id="softirq_exit">
+			<stateChange>
+			    <stateAttribute type="location" value="CurrentSoftIRQ" />
+			    <stateValue type="null" />
+			</stateChange>
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="string" value="softirq"/>
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="cpu" type="long">
+						<stateValue type="eventField" value="cpu" />
+					</synField>
+					<synField name="vec" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentCPU" />
+							<stateAttribute type="constant" value="vec" />
+						</stateValue>
+					</synField>
+				</synContent>
+			</synEvent>
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentCPU" />
+				<stateAttribute type="constant" value="vec" />
+				<stateValue type="null"/>
+			</stateChange>
+		</action>
+<!-- 		SOCKET FSM ACTIONS -->
+		<action id="syn/socket_connected" >
+			<synEvent>
+				<synType eventName="socket connected" />
+			</synEvent>
+		</action>
+		<action id="syn/socket_accepted" >
+			<synEvent>
+				<synType eventName="socket accepted" />
+			</synEvent>
+		</action>
+		<action id="saveCPU">
+			<stateChange>	
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu"/>
+			</stateChange>
+		</action>
+<!-- 		PROCESS_MANAGEMENT FSM ACTION -->
+		<action id="sys_clone">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu" />
+			</stateChange>
+		</action>
+		<action id="sched_migrate_task">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="orig_cpu" />
+				<stateValue type="eventField" value="orig_cpu" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" forcedType="int" value="dest_cpu" />
+			</stateChange>
+		</action>
+		<action id="sched_process_fork">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="parent_pid" />
+				<stateValue type="eventField" value="parent_pid" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="child_pid" />
+				<stateValue type="eventField" value="child_pid" />
+			</stateChange>
+		</action>
+		<action id="sched_wakeup_new">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="target_cpu" />
+				<stateValue type="eventField" value="target_cpu" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="tid" />
+				<stateValue type="eventField" value="tid" />
+			</stateChange>
+		</action>
+		<action id="syn/process_cloned">
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="string" value="process_cloned"/>
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="cpu" type="long">
+						<stateValue type="eventField" value="cpu" />
+					</synField>
+					<synField name="parent_pid" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="parent_pid" />
+						</stateValue>
+					</synField>
+					<synField name="child_pid" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="child_pid" />
+						</stateValue>
+					</synField>
+					<synField name="tid" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="tid" />
+						</stateValue>
+					</synField>
+					<synField name="orig_cpu" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="orig_cpu" />
+						</stateValue>
+					</synField>
+					<synField name="target_cpu" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="target_cpu" />
+						</stateValue>
+					</synField>
+					<synField name="ret" type="long">
+						<stateValue type="eventField" value="ret" />
+					</synField>
+				</synContent>
+			</synEvent>
+		</action>
+		<action id="sys_setpgid">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="pid" />
+				<stateValue type="eventField" value="pid" />
+			</stateChange>
+		</action>
+		<action id="syn/process_scheduled">
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="string" value="process_scheduled"/>
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="cpu" type="long">
+						<stateValue type="eventField" value="cpu" />
+					</synField>
+					<synField name="pid" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="pid" />
+						</stateValue>
+					</synField>
+					<synField name="ret" type="long">
+						<stateValue type="eventField" value="ret" />
+					</synField>
+				</synContent>
+			</synEvent>
+		</action>
+		<action id="sys_exit_group">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="cpu" />
+				<stateValue type="eventField" value="cpu" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="error_code" />
+				<stateValue type="eventField" value="error_code" />
+			</stateChange>
+		</action>
+		<action id="sched_process_exit" >
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="tid" />
+				<stateValue type="eventField" value="tid" />
+			</stateChange>
+		</action>
+		<action id="signal_generate">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="sig" />
+				<stateValue type="eventField" value="sig" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="pid" />
+				<stateValue type="eventField" value="pid" />
+			</stateChange>
+		</action>
+		<action id="syn/exit_process">
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="string" value="exit_process"/>
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="cpu" type="long">
+						<stateValue type="eventField" value="cpu" />
+					</synField>
+					<synField name="pid" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="pid" />
+						</stateValue>
+					</synField>
+					<synField name="tid" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="tid" />
+						</stateValue>
+					</synField>
+					<synField name="tid_ttwu" type="long">
+						<stateValue type="eventField" value="tid" />
+					</synField>
+					<synField name="sig" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="sig" />
+						</stateValue>
+					</synField>
+				</synContent>
+			</synEvent>
+		</action>
+<!-- 		SYSCALL -->
+		<fsm id="syscall">
+<!-- 			<precondition input="sys_x" /> -->
+<!-- 			<precondition input="exit_syscall" /> -->
+			<precondition input="tid_2652" />
+			<stateTable>
+				<stateDefinition name="wait_sys_x">
+					<transition input="sys_entry" next="wait_sys_x" />
+					<transition input="sys_entry_callsite" next="wait_sys_x" />
+<!-- 					<transition input="sys_poll" next="wait_sys_x" /> -->
+					<transition input="sys_x" next="sys_x" action="sys_x_founded" saveSpecialFields="true"/>
+					<transition input="#other" next="wait_sys_x" />
+				</stateDefinition>
+				<stateDefinition name="sys_x" >
+					<transition input="exit_syscall:thread_thread" next="exit_syscall" action="exit_syscall_founded" saveSpecialFields="true" clearSpecialFields="true"/>
+					<transition input="#other" next="sys_x" />
+				</stateDefinition>
+				<stateDefinition name="exit_syscall">
+					<transition input="#other" next="exit_syscall"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait_sys_x"/>
+			<endState id="exit_syscall" />
+		</fsm>
+<!-- 		SCHED_SWITCH -->
+		<fsm id="sched_switch" multiple="false">
+			<precondition input="sched_switch"/>
+			<stateTable>
+				<stateDefinition name="sched_switch">
+					<transition input="sched_switch" next="sched_switch" action="update Current_thread" />
+					<transition input="#other" next="sched_switch" />
+				</stateDefinition>
+				<stateDefinition name="fake_end">
+					<transition input="#other" next="fake_end"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="sched_switch"/>
+			<endState id="fake_end" />
+		</fsm>
+<!-- 		  FILE MANAGEMENT-->
+		<fsm id="fileAccess" multiple="false">
+			<precondition input="syn/X" />
+			<stateTable>
+				<stateDefinition name="wait syn/sys_open">
+					<transition input="syn/sys_open" next="wait syn/sys_close" saveSpecialFields="true"/>
+					<transition input="#other" next="wait syn/sys_open"/>
+				</stateDefinition>
+				<stateDefinition name="wait syn/sys_close">
+					<transition input="syn/sys_close:close_match" next="wait syn/sys_open" action="syn/fileAccess" saveSpecialFields="true" clearSpecialFields="true"/>
+					<transition input="#other" next="wait syn/sys_close"/>
+				</stateDefinition>
+				<stateDefinition name="fake ending">
+					<transition input="#other" next="fake ending"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait syn/sys_open"/>
+			<endState id="fake ending" />
+		</fsm>
+<!-- 		IRQ FSM -->
+		<fsm id="irq_handler">
+			<precondition input="XirqX" />
+			<stateTable>
+				<stateDefinition name="wait irq_entry">
+					<transition input="irq_handler_entry" next="wait irq_exit" action="irq_handler_entry" />
+					<transition input="#other" next="wait irq_entry"/>
+				</stateDefinition>
+				<stateDefinition name="wait irq_exit">
+					<transition input="irq_handler_exit:cpu_cpu" next="irq" action="irq_handler_exit" />
+					<transition input="#other" next="wait irq_exit"/>
+				</stateDefinition>
+				<stateDefinition name="irq">
+					<transition input="#other" next="irq"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait irq_entry"/>
+			<endState id="irq" />
+		</fsm>
+		<fsm id="softirq">
+			<precondition input="XirqX" />
+			<stateTable>
+				<stateDefinition name="wait irq_entry">
+				  <transition input="softirq_entry" next="wait irq_exit" action="softirq_entry" />
+				  <transition input="#other" next="wait irq_entry"/>
+				</stateDefinition>
+				<stateDefinition name="wait irq_exit">
+					<transition input="softirq_exit:cpu_cpu" next="irq" action="softirq_exit" />
+					<transition input="#other" next="wait irq_exit"/>
+				</stateDefinition>
+				<stateDefinition name="irq">
+					<transition input="#other" next="irq"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait irq_entry"/>
+			<endState id="irq" />
+		</fsm>
+<!-- 		SOCKET FSM -->
+		<fsm id="socket_connect">
+			<precondition input="syn/X" />
+			<stateTable>
+				<stateDefinition name="wait syn/sys_connect">
+					<transition input="syn/sys_connect" next="syn/sys_connect" action="saveCPU" saveSpecialFields="true"/>
+					<transition input="#other" next="wait syn/sys_connect"/>
+				</stateDefinition>
+				<stateDefinition name="syn/sys_connect">
+					<transition input="syn/sys_close:cpu_cpu:close_match_connect" next="socket_connected" action="syn/socket_connected" saveSpecialFields="true"/>
+					<transition input="#other" next="syn/sys_connect"/>
+				</stateDefinition>
+				<stateDefinition name="socket_connected">
+					<transition input="#other" next="socket_connected"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait syn/sys_connect"/>
+			<endState id="socket_connected" />
+		</fsm>
+		<fsm id="socket_accept">
+			<precondition input="syn/X" />
+			<stateTable>
+				<stateDefinition name="wait syn/sys_accept">
+					<transition input="syn/sys_accept" next="syn/sys_accept" action="saveCPU" saveSpecialFields="true"/>
+					<transition input="#other" next="wait syn/sys_accept"/>
+				</stateDefinition>
+				<stateDefinition name="syn/sys_accept">
+					<transition input="syn/sys_close:cpu_cpu:close_match_accept" next="socket_accepted" action="syn/socket_accepted" saveSpecialFields="true"/>
+					<transition input="#other" next="syn/sys_accept"/>
+				</stateDefinition>
+				<stateDefinition name="socket_accepted">
+					<transition input="#other" next="socket_accepted"/>
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait syn/sys_accept"/>
+			<endState id="socket_accepted" />
+		</fsm>
+<!-- 		PROCESS_MANAGEMENT -->
+		<fsm id="process_cloned">
+			<stateTable>
+				<stateDefinition name="wait_sys_clone">
+					<transition input="sys_clone" next="sys_clone" action="sys_clone" />
+					<transition input="#other" next="wait_sys_clone" />
+				</stateDefinition>
+				<stateDefinition name="sys_clone">
+					<transition input="sched_migrate_task:cpu_cpu" next="sched_migrate_task" action="sched_migrate_task" />
+					<transition input="#other" next="sys_clone" />
+				</stateDefinition>
+				<stateDefinition name="sched_migrate_task">
+					<transition input="sched_process_fork:cpu_cpu" next="sched_process_fork" action="sched_process_fork" />
+					<transition input="#other" next="sched_migrate_task" />
+				</stateDefinition>
+				<stateDefinition name="sched_process_fork">
+					<transition input="sched_wakeup_new:cpu_cpu" next="sched_wakeup_new" action="sched_wakeup_new"/>
+					<transition input="#other" next="sched_process_fork" />
+				</stateDefinition>
+				<stateDefinition name="sched_wakeup_new">
+					<transition input="exit_syscall:cpu_cpu" next="process_cloned" action="syn/process_cloned" />
+					<transition input="#other" next="sched_wakeup_new" />
+				</stateDefinition>
+				<stateDefinition name="process_cloned">
+					<transition input="#other" next="process_cloned" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait_sys_clone"/>
+			<endState id="process_cloned" />
+		</fsm>
+		<fsm id="process_scheduled">
+			<stateTable>
+				<stateDefinition name="wait_sys_setpgid">
+					<transition input="sys_setpgid" next="sys_setpgid" action="sys_setpgid" />
+					<transition input="#other" next="wait_sys_setpgid" />
+				</stateDefinition>
+				<stateDefinition name="sys_setpgid">
+					<transition input="exit_syscall:cpu_cpu" next="process_scheduled" action="syn/process_scheduled"/>
+					<transition input="#other" next="sys_setpgid" />
+				</stateDefinition>
+				<stateDefinition name="process_scheduled">
+					<transition input="#other" next="process_scheduled" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait_sys_setpgid"/>
+			<endState id="process_scheduled" />
+		</fsm>
+		<fsm id="exit_process">
+			<stateTable>
+				<stateDefinition name="wait_sys_exit_group">
+					<transition input="sys_exit_group" next="sys_exit_group" action="sys_exit_group" />
+					<transition input="#other" next="wait_sys_exit_group" />
+				</stateDefinition>
+				<stateDefinition name="sys_exit_group">
+					<transition input="sched_process_exit:cpu_cpu" next="sched_process_exit" action="sched_process_exit"/>
+					<transition input="#other" next="sys_exit_group" />
+				</stateDefinition>
+				<stateDefinition name="sched_process_exit">
+					<transition input="signal_generate:cpu_cpu" next="signal_generate" action="signal_generate"/>
+					<transition input="#other" next="sched_process_exit" />
+				</stateDefinition>
+				<stateDefinition name="signal_generate">
+					<transition input="sched_ttwu:cpu_cpu" next="exit_process" action="syn/exit_process"/>
+					<transition input="#other" next="signal_generate" />
+				</stateDefinition>
+				<stateDefinition name="exit_process">
+					<transition input="#other" next="exit_process" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait_sys_exit_group"/>
+			<endState id="exit_process" />
+		</fsm>
+	</filterHandler>
+</filter>
+</tmfxml>

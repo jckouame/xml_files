@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmfxml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="xmlDefinition.xsd">
+<filter version="0" id="my.kernel.process.7.0.filter.provider">
+	<head>
+		<traceType id="org.eclipse.linuxtools.lttng2.kernel.tracetype" />
+		<label value="My kernel process XML 7.0 Filter" />
+	</head>
+	
+	<definedField name="filename" id="filename"/>
+	<definedField name="fd" id="fd"/>
+	<definedField name="ret" id="ret"/>
+	<definedField name="flags" id="flags"/>
+	<definedField name="offset" id="offset"/>
+	<definedField name="fd_in" id="fd_in"/>
+	<definedField name="fd_out" id="fd_out"/>
+	<filterHandler filterName="process">
+		<initialFsm id="fork_sh|follow_process"/>
+		<transitionInput id="sched_process_fork">
+			<event eventName="sched_process_fork"/>
+		</transitionInput>
+		<transitionInput id="process_is_sh">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="eventField" value="child_comm" />
+						<stateValue type="string" value="sh" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="root_is_sh">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<stateValue type="query" >
+							<stateAttribute type="constant" value="Threads" />
+							<stateAttribute type="eventField" value="parent_tid" />
+							<stateAttribute type="constant" value="root" />
+						</stateValue>
+						<stateValue type="string" value="sh" />
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<transitionInput id="sched_process_exit">
+			<event eventName="sched_process_exit"/>
+		</transitionInput>
+		<transitionInput id="same_tid">
+			<event eventName="#any">
+				<if>
+					<conditionFilterEvent>
+						<field name="tid" />
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="child_tid" />
+						</stateValue>
+					</conditionFilterEvent>
+				</if>
+			</event>
+		</transitionInput>
+		<action id="sched_process_fork">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="PPID" />
+				<stateValue type="eventField" value="parent_tid" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="PID" />
+				<stateValue type="eventField" value="child_tid" />
+			</stateChange>
+		</action>
+		<action id="clear_data">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="PPID" />
+				<stateValue type="null" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="PID" />
+				<stateValue type="null"/>
+			</stateChange>
+		</action>
+		<action id="sched_process_fork1">
+			<action id="sched_process_fork"/>
+			<stateChange>
+				<stateAttribute type="constant" value="Threads" />
+				<stateAttribute type="eventField" value="child_tid" />
+				<stateAttribute type="constant" value="PPID" />
+				<stateValue type="eventField" value="parent_tid" forcedType="int" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="constant" value="Threads" />
+				<stateAttribute type="eventField" value="child_tid" />
+				<stateAttribute type="constant" value="Exec_name" />
+				<stateValue type="eventField" value="child_comm" />
+			</stateChange>
+		</action>
+		<action id="process_is_sh">
+			<stateChange>
+				  <stateAttribute type="constant" value="Threads" />
+				  <stateAttribute type="eventField" value="child_tid" />
+				  <stateAttribute type="constant" value="root" />
+				  <stateValue type="string" value="sh" />
+			 </stateChange>
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="string" value="exec_sh"/>
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="root" type="string">
+						<stateValue type="string" value="sh" />
+					</synField>
+					<synField name="parent_tid" type="int">
+						<stateValue type="eventField" value="parent_tid" forcedType="int" />
+					</synField>
+					<synField name="P_exec_name" type="string">
+						<stateValue type="query">
+							<stateAttribute type="constant" value="Threads" />
+							<stateAttribute type="eventField" value="parent_tid" />
+							<stateAttribute type="constant" value="Exec_name" />
+						</stateValue>
+					</synField>
+					<synField name="child_tid" type="long">
+						<stateValue type="eventField" value="child_tid" forcedType="int" />
+					</synField>
+				</synContent>
+			</synEvent>
+			<action id="clear_data" />
+		</action>
+		<action id="save_data">
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="child_tid" />
+				<stateValue type="eventField" value="child_tid" />
+			</stateChange>
+			<stateChange>
+				<stateAttribute type="location" value="CurrentScenario" />
+				<stateAttribute type="constant" value="parent_tid" />
+				<stateValue type="eventField" value="parent_tid" />
+			</stateChange>
+			<stateChange>
+				  <stateAttribute type="constant" value="Threads" />
+				  <stateAttribute type="eventField" value="child_tid" />
+				  <stateAttribute type="constant" value="root" />
+				  <stateValue type="string" value="sh" />
+			 </stateChange>
+		</action>
+		<action id="gen_process_event">
+			<synEvent>
+				<synType>
+					<eventName>
+						<stateValue type="eventField" value="comm" />
+					</eventName>
+				</synType>
+				<synContent>
+					<synField name="root" type="string">
+						<stateValue type="string" value="sh" />
+					</synField>
+					<synField name="parent_tid" type="int">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="parent_tid" />
+						</stateValue>
+					</synField>
+					<synField name="child_tid" type="long">
+						<stateValue type="query">
+							<stateAttribute type="location" value="CurrentScenario" />
+							<stateAttribute type="constant" value="child_tid" />
+						</stateValue>
+					</synField>
+					<synField name="comm" type="string">
+						<stateValue type="eventField" value="comm" />
+					</synField>
+				</synContent>
+			</synEvent>
+		</action>
+		<fsm id="fork_sh" multiple="false">
+			<stateTable>
+				<stateDefinition name="wait_sched_process_fork">
+					<transition input="sched_process_fork" next="process_forked" action="sched_process_fork1" />
+					<transition input="#other" next="wait_sched_process_fork" />
+				</stateDefinition>
+				<stateDefinition name="process_forked" automatic="true">
+					<transition input="process_is_sh" next="wait_sched_process_fork" action="process_is_sh" />
+					<transition input="#other" next="wait_sched_process_fork" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait_sched_process_fork"/>
+		</fsm>
+		<fsm id="follow_process">
+			<stateTable>
+				<stateDefinition name="wait_sched_process_fork">
+				  <transition  input="sched_process_fork:root_is_sh" next="wait_process_exit" action="save_data" />
+				  <transition input="#other" next="wait_sched_process_fork" />
+				</stateDefinition>
+				<stateDefinition name="wait_process_exit">
+					<transition input="sched_process_exit:same_tid" next="process_exited" action="gen_process_event" />
+					<transition input="#other" next="wait_process_exit" />
+				</stateDefinition>
+				<stateDefinition name="process_exited">
+					<transition input="#other" next="wait_root_sh" />
+				</stateDefinition>
+			</stateTable>
+			<initialState id="wait_sched_process_fork"/>
+			<endState id="process_exited" />
+		</fsm>
+	</filterHandler>
+</filter>
+</tmfxml>
